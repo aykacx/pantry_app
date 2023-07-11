@@ -19,11 +19,10 @@
             <a href="add_product.php">Products</a>
         </div>
     </nav>
-    <br><br>
     <h2>Orders</h2>
     <div class="container">
         <form action="" method="POST">
-            <select name="food">
+            <select name="foodId">
                 <?php
                 $query = $conn->query('SELECT * FROM foods', PDO::FETCH_ASSOC);
                 if ($query->rowCount()) {
@@ -38,8 +37,8 @@
     </div>
     <?php
     if (isset($_POST['order'])) {
-        $orderId = $_POST['food'];
-        $query = $conn->query("SELECT product_1, product_2, product_3, product_4 FROM foods WHERE {'$orderId'}")->fetch(PDO::FETCH_ASSOC);
+        $orderId = $_POST['foodId'];
+        $query = $conn->query("SELECT product_1, product_2, product_3, product_4 FROM foods WHERE id= '$orderId'")->fetch(PDO::FETCH_ASSOC);
         $product_1 = $query['product_1'];
         $product_2 = $query['product_2'];
         $product_3 = $query['product_3'];
