@@ -7,69 +7,134 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
-
     <title>Pantry App</title>
 
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .navigation_bar {
+            background-color: #f0f0f0;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navigation_bar a {
+            padding: 5px 10px;
+            background-color: lightblue;
+            color: black;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        body {
+            font-family: Verdana, Geneva, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            background-color: #f0f0f0;
+            padding: 10px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h2 {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .form-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        select,
+        input[type="submit"] {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="submit"] {
+            background-color: lightblue;
+            color: black;
+        }
+
+        .result {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 
 <body>
-    <nav>
-        <div class="container">
-            <a href="index.php">Pantry App</a>
-            <a href="add_product.php">Products</a>
-        </div>
+    <nav class='navigation_bar'>
+        <a href="index.php">Pantry App</a>
+        <a href="add_product.php">Products</a>
     </nav>
+
     <h2>Orders</h2>
-    <div class="container">
+
+    <div class="form-container">
         <form action="" method="POST">
-            <select name="foodId">
-                <?php
-                $query = $conn->query('SELECT * FROM foods', PDO::FETCH_ASSOC);
-                if ($query->rowCount()) {
-                    foreach ($query as $row) {
-                        print "<option value='" . $row['id'] . "'>" . $row['food_name'] . "</option>";
+            <div>
+                <select name="foodId">
+                    <?php
+                    $query = $conn->query('SELECT * FROM foods', PDO::FETCH_ASSOC);
+                    if ($query->rowCount()) {
+                        foreach ($query as $row) {
+                            echo "<option value='" . $row['id'] . "'>" . $row['food_name'] . "</option>";
+                        }
                     }
-                }
-                ?>
-            </select>
-            <input type="submit" name="order" value="Order">
+                    ?>
+                </select>
+                <input type="submit" name="order" value="Order">
+            </div>
         </form>
     </div>
+
     <?php
     if (isset($_POST['order'])) {
         $orderId = $_POST['foodId'];
-        $query = $conn->query("SELECT product_1, product_2, product_3, product_4 FROM foods WHERE id= '$orderId'")->fetch(PDO::FETCH_ASSOC);
-        $product_1 = $query['product_1'];
-        $product_2 = $query['product_2'];
-        $product_3 = $query['product_3'];
-        $product_4 = $query['product_4'];
 
-        $query2 = $conn->query("SELECT amount FROM inventory WHERE product_name = '{$product_1}'")->fetch(PDO::FETCH_ASSOC);
-        $product1amount = $query2['amount'];
+        $query = $conn->query("SELECT product_1, product_2, product_3, product_4 FROM foods WHERE id= '$orderId'", PDO::FETCH_ASSOC);
+        $products = $query->fetch();
 
-        $query3 = $conn->query("SELECT amount FROM inventory WHERE product_name = '{$product_2}'")->fetch(PDO::FETCH_ASSOC);
-        $product2amount = $query3['amount'];
+        $product_1 = $products['product_1'];
+        $product_2 = $products['product_2'];
+        $product_3 = $products['product_3'];
+        $product_4 = $products['product_4'];
 
-        $query4 = $conn->query("SELECT amount FROM inventory WHERE product_name = '{$product_3}'")->fetch(PDO::FETCH_ASSOC);
-        $product3amount = $query4['amount'];
-
-        $query5 = $conn->query("SELECT amount FROM inventory WHERE product_name = '{$product_4}'")->fetch(PDO::FETCH_ASSOC);
-        $product4amount = $query5['amount'];
-
+        $product1amount = $conn->query("SELECT amount FROM inventory WHERE product_name = '{$product_1}'")->fetchColumn();
+        $product2amount = $conn->query("SELECT amount FROM inventory WHERE product_name = '{$product_2}'")->fetchColumn();
+        $product3amount = $conn->query("SELECT amount FROM inventory WHERE product_name = '{$product_3}'")->fetchColumn();
+        $product4amount = $conn->query("SELECT amount FROM inventory WHERE product_name = '{$product_4}'")->fetchColumn();
 
         if ($product1amount == 0 || $product2amount == 0 || $product3amount == 0 || $product4amount == 0) {
-            echo 'insufficient product';
+            echo 'Insufficient products:<br>';
             if ($product1amount == 0) {
-                echo $product_1 . 'Finised';
+                echo $product_1 . ' - Finished<br>';
             }
             if ($product2amount == 0) {
-                echo $product_2 . 'Finised';
+                echo $product_2 . ' - Finished<br>';
             }
-            if ($product1amount == 0) {
-                echo $product_3 . 'Finised';
+            if ($product3amount == 0) {
+                echo $product_3 . ' - Finished<br>';
             }
-            if ($product1amount == 0) {
-                echo $product_4 . 'Finised';
+            if ($product4amount == 0) {
+                echo $product_4 . ' - Finished<br>';
             }
         } else {
             $product1amount--;
@@ -77,37 +142,12 @@
             $product3amount--;
             $product4amount--;
 
-            $db_prepare = $conn->prepare("UPDATE inventory SET amount= :new_amount WHERE product_name= :p_name");
-            $update = $db_prepare->execute(
-                array(
-                    "new_amount" => $product1amount,
-                    "p_name" => $product_1
-                )
-            );
+            $conn->query("UPDATE inventory SET amount = $product1amount WHERE product_name = '{$product_1}'");
+            $conn->query("UPDATE inventory SET amount = $product2amount WHERE product_name = '{$product_2}'");
+            $conn->query("UPDATE inventory SET amount = $product3amount WHERE product_name = '{$product_3}'");
+            $conn->query("UPDATE inventory SET amount = $product4amount WHERE product_name = '{$product_4}'");
 
-            $db_prepare1 = $conn->prepare("UPDATE inventory SET amount= :new_amount WHERE product_name= :p_name");
-            $update = $db_prepare1->execute(
-                array(
-                    "new_amount" => $product2amount,
-                    "p_name" => $product_2
-                )
-            );
-
-            $db_prepare2 = $conn->prepare("UPDATE inventory SET amount= :new_amount WHERE product_name= :p_name");
-            $update = $db_prepare2->execute(
-                array(
-                    "new_amount" => $product3amount,
-                    "p_name" => $product_3
-                )
-            );
-
-            $db_prepare3 = $conn->prepare("UPDATE inventory SET amount= :new_amount WHERE product_name= :p_name");
-            $update = $db_prepare3->execute(
-                array(
-                    "new_amount" => $product4amount,
-                    "p_name" => $product_4
-                )
-            );
+            echo 'Order successfully placed!';
         }
     }
     ?>
